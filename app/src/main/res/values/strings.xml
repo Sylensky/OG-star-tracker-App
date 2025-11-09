@@ -7,7 +7,7 @@
 	<string name="connection_connected">Connected</string>
 	<string name="connection_not_connected">Not Connected</string>
 	<string name="dialog_close">Close</string>
-	<string name="connection_hint">- Connect to WiFi: OG Star Tracker\n  Password: password123</string>
+	<string name="connection_hint">- Connect to WiFi: OG StarTracker#XXXX\n  (XXXX = unique device identifier)\n  Password: password123</string>
 	<string name="location_hint">- Enable Location</string>
 	<string name="notification_hint">- Enable Notifications</string>
 	<string name="photo_control_title">Photo Control</string>
@@ -26,7 +26,7 @@
 	<string name="photo_control_start_capture">Start</string>
 	<string name="photo_control_end_capture">End</string>
 	<string name="photo_control_taken_exposures">Number of exposures taken</string>
-	<string name="photo_control_taken_exposures_value">%d/%d</string>
+	<string name="photo_control_taken_exposures_value" formatted="false">%d/%d</string>
 	<string name="photo_control_start_time">Start time</string>
 	<string name="photo_control_elapsed_time">Elapsed Time</string>
 	<string name="photo_control_estimated_time">Estimated Time</string>
@@ -46,7 +46,7 @@
 	<string name="exposure_test_start">Start testing</string>
 	<string name="exposure_test_end">End testing</string>
 	<string name="sidereal_tracking_title">Tracking</string>
-	<string name="sidereal_tracking_subtitle">Compensate for Earth’s rotation\n\nMode: %s\nHemisphere: %s</string>
+	<string name="sidereal_tracking_subtitle" formatted="false">Compensate for Earth\'s rotation\n\nMode: %s\nHemisphere: %s</string>
 	<string name="slew_control_title">Slew Control</string>
 	<string name="slew_control_subtitle">Manually Rotate Tracker</string>
 	<string name="slew_control_step_size">Slew speed multiplier</string>
@@ -65,8 +65,9 @@
 	<string name="settings_android_version">Android App</string>
 	<string name="settings_tracking_mode">Tracking Mode</string>
 	<string name="settings_tracking_mode_sidereal">Sidereal (23h 56 min 4s)</string>
-	<string name="settings_tracking_mode_solar">Solar (24h)</string>
 	<string name="settings_tracking_mode_lunar">Lunar (24h, 31 min)</string>
+	<string name="settings_tracking_mode_solar">Solar (24h)</string>
+	<string name="settings_tracking_mode_custom">Custom Rate</string>
 	<string name="notifications_title">OG Star Tracker status</string>
 	<string name="notifications_init_value">Initializing</string>
 	<string name="notifications_channel_name">Hardware Status</string>

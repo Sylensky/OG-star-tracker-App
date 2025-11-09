@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import og.ogstartracker.domain.models.Hemisphere
 import og.ogstartracker.domain.usecases.arduino.GetVersionUseCase
+import og.ogstartracker.network.models.VersionResponse
 import og.ogstartracker.utils.onSuccess
 
 class SettingsViewModel internal constructor(
@@ -20,8 +21,14 @@ class SettingsViewModel internal constructor(
 
 	init {
 		viewModelScope.launch(Dispatchers.Default) {
-			getVersion().onSuccess { version ->
-				_uiState.update { it.copy(version = version) }
+			// Use cached version if available
+			val cached = og.ogstartracker.utils.VersionHolder.version
+			if (cached != null) {
+				_uiState.update { it.copy(version = cached) }
+			} else {
+				getVersion().onSuccess { versionResponse ->
+					_uiState.update { it.copy(version = versionResponse) }
+				}
 			}
 		}
 	}
@@ -30,5 +37,5 @@ class SettingsViewModel internal constructor(
 
 data class SettingsUiState internal constructor(
 	val hemisphere: Hemisphere? = null,
-	val version: Int? = null,
+	val version: VersionResponse? = null,
 )

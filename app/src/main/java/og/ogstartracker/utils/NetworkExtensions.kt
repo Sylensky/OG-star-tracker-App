@@ -16,8 +16,10 @@ suspend fun <E : Any> tryOnline(
 	doOnSuccess: suspend ((E?) -> Unit) = {},
 	request: suspend () -> Response<E>
 ): Resource<E> {
+	var httpResponse: Response<E>? = null
 	return try {
 		val response = request()
+		httpResponse = response
 		if (response.isSuccessful) {
 			doOnSuccess(response.body())
 			ResourceUtils.success(response.body())
@@ -42,8 +44,16 @@ suspend fun <E : Any> tryOnline(
 			ResourceUtils.error(ErrorIdentificationImpl.Unknown)
 		}
 	} catch (e: JsonDataException) {
-		Timber.e(e)
-		ResourceUtils.error(ErrorIdentificationImpl.Unknown)
+		// JSON parsing failed, but if HTTP response was 200 OK, the tracker is reachable
+		// This happens when firmware returns plain text instead of JSON
+		Timber.w(e, "JSON parse error, but HTTP response was: ${httpResponse?.code()}")
+		if (httpResponse?.isSuccessful == true) {
+			Timber.d("Treating as success despite JSON parse failure (tracker responded with 200 OK)")
+			// Return success with null body - caller can check wifiConnected=true
+			ResourceUtils.success(null)
+		} else {
+			ResourceUtils.error(ErrorIdentificationImpl.Unknown)
+		}
 	}
 }
 
