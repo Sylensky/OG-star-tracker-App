@@ -4,7 +4,7 @@ object Config {
 	const val SLEW_MIN_VALUE = 0
 	const val SLEW_MAX_VALUE = 5
 
-	const val WIFI_SSID = "\"OG Star Tracker\""
+	const val WIFI_SSID_PREFIX = "\"OG Star Tracker#"
 	const val WIFI_SSID_UNKNOWN = "<unknown ssid>" // returned when the app is not running
 
 	const val STATUS_TRACKING_ON = "Tracking ON"

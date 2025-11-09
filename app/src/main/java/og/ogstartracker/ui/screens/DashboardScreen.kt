@@ -225,7 +225,8 @@ private fun checkWifiConnection(
 	networkCapabilities?.takeIf { it.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) }?.let innerLet@{
 		val wifiManager = context.getSystemService<WifiManager>() ?: return false
 
-		val correctWifi = wifiManager.connectionInfo.ssid == Config.WIFI_SSID
+		val currentSsid = wifiManager.connectionInfo.ssid
+		val correctWifi = currentSsid.startsWith(Config.WIFI_SSID_PREFIX)
 		viewModel.setConnection(correctWifi)
 
 		if (correctWifi) {
