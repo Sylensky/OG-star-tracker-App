@@ -9,6 +9,8 @@ class GetVersionUseCase constructor(
 ) : ResourceSuspendProviderUseCase<Int?> {
 
 	override suspend fun invoke() = repository.getVersion().map {
-		it?.toIntOrNull()
+		// Extract version number from VersionResponse
+		// Try to parse the version string to an integer (e.g., "2.0.0" -> null, "7" -> 7)
+		it?.version?.toIntOrNull()
 	}
 }

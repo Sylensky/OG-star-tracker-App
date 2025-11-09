@@ -73,8 +73,17 @@ class HardwareStatusService : Service(), KoinComponent {
 
 				val mNotificationManager = getSystemService<NotificationManager>() ?: return@launch
 
-				getStatus(GetCurrentStateUseCase.Input(showInUI = false)).onSuccess {
-					val notification = buildNotification(this@HardwareStatusService, it ?: handleErrorMessage())
+				getStatus(GetCurrentStateUseCase.Input(showInUI = false)).onSuccess { statusResponse ->
+					val statusMessage = statusResponse?.let {
+						when {
+							it.intervalometerActive -> "Capturing (${it.exposuresTaken}/${it.currentExposure})"
+							it.goToTarget -> "Going to target"
+							it.slewActive -> "Slewing"
+							it.trackingActive -> "Tracking ON"
+							else -> "Idle"
+						}
+					} ?: handleErrorMessage()
+					val notification = buildNotification(this@HardwareStatusService, statusMessage)
 					mNotificationManager.notify(NOTIFICATION_ID, notification)
 				}.onError {
 					val notification = buildNotification(this@HardwareStatusService, handleErrorMessage(it))
@@ -145,7 +154,9 @@ class HardwareStatusService : Service(), KoinComponent {
 		networkCapabilities?.takeIf { it.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) }?.let {
 			val wifiManager = context.getSystemService<WifiManager>() ?: return false
 
-			val correctWifi = wifiManager.connectionInfo.ssid == Config.WIFI_SSID
+			// Check if SSID starts with the tracker prefix (removing surrounding quotes)
+			val ssid = wifiManager.connectionInfo.ssid.removePrefix("\"").removeSuffix("\"")
+			val correctWifi = ssid.startsWith(Config.WIFI_SSID_PREFIX)
 				|| wifiManager.connectionInfo.ssid == Config.WIFI_SSID_UNKNOWN
 			if (!correctWifi) {
 				stopForegroundService()

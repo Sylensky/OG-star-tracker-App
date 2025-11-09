@@ -122,11 +122,12 @@ interface ArduinoRepository {
 	 * operation, such as whether the Arduino is currently capturing images or tracking stars.
 	 *
 	 * @param showInUI A flag indicating whether the status message should be shown in the UI.
-	 * @return A Resource object that contains a String. If the operation is successful, the String will be the status
-	 * message. If the operation fails, the String will be an error message.
+	 * @return A Resource object that contains a StatusResponse. If the operation is successful, the StatusResponse will contain
+	 * status information including slewActive, trackingActive, intervalometerActive, goToTarget, exposuresTaken, and currentExposure.
+	 * If the operation fails, the Resource will contain an error message.
 	 * @throws Exception If there is a problem with the communication with the Arduino, an exception will be thrown.
 	 */
-	suspend fun getStatus(showInUI: Boolean): Resource<String>
+	suspend fun getStatus(showInUI: Boolean): Resource<og.ogstartracker.network.StatusResponse>
 
 	/**
 	 * Resets the last message sent by the Arduino.
@@ -141,11 +142,11 @@ interface ArduinoRepository {
 	/**
 	 * Retrieves the version of the Arduino firmware.
 	 *
-	 * This function sends a command to the Arduino to get the version of its firmware. The version is returned as a String.
+	 * This function sends a command to the Arduino to get the version of its firmware.
 	 *
-	 * @return A Resource object that contains a String. If the operation is successful, the String will be the version
-	 * number. If the operation fails, the String will be an error message.
+	 * @return A Resource object that contains a VersionResponse. If the operation is successful, the VersionResponse will contain
+	 * the firmware version and build date. If the operation fails, the Resource will contain an error message.
 	 * @throws Exception If there is a problem with the communication with the Arduino, an exception will be thrown.
 	 */
-	suspend fun getVersion(): Resource<String>
+	suspend fun getVersion(): Resource<og.ogstartracker.network.VersionResponse>
 }

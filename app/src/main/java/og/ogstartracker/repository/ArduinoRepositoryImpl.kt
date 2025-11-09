@@ -76,8 +76,18 @@ class ArduinoRepositoryImpl constructor(
 
 	override suspend fun getStatus(showInUI: Boolean) = tryOnline {
 		arduinoApi.getStatus()
-	}.onSuccess { message ->
-		_lastArduinoMessage.value = message
+	}.onSuccess { statusResponse ->
+		// Convert status response to readable message for backward compatibility
+		val message = when {
+			statusResponse?.intervalometerActive == true -> "Capturing"
+			statusResponse?.goToTarget == true -> "Going to target"
+			statusResponse?.slewActive == true -> "Slewing"
+			statusResponse?.trackingActive == true -> "Tracking ON"
+			else -> "Idle"
+		}
+		if (showInUI) {
+			_lastArduinoMessage.value = message
+		}
 	}
 
 	override suspend fun resetLastMessage() {
