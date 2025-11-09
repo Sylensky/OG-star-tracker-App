@@ -73,17 +73,8 @@ class HardwareStatusService : Service(), KoinComponent {
 
 				val mNotificationManager = getSystemService<NotificationManager>() ?: return@launch
 
-				getStatus(GetCurrentStateUseCase.Input(showInUI = false)).onSuccess { statusResponse ->
-					val statusMessage = statusResponse?.let { status ->
-						buildString {
-							if (status.trackingActive) append("Tracking ON")
-							else if (status.slewActive) append("Slewing")
-							else if (status.intervalometerActive) {
-								append("Capturing: ${status.currentExposure}/${status.exposuresTaken}")
-							} else append("Idle")
-						}
-					} ?: handleErrorMessage()
-					val notification = buildNotification(this@HardwareStatusService, statusMessage)
+				getStatus(GetCurrentStateUseCase.Input(showInUI = false)).onSuccess {
+					val notification = buildNotification(this@HardwareStatusService, it ?: handleErrorMessage())
 					mNotificationManager.notify(NOTIFICATION_ID, notification)
 				}.onError {
 					val notification = buildNotification(this@HardwareStatusService, handleErrorMessage(it))

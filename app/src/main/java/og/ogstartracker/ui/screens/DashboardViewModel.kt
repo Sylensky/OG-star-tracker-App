@@ -19,7 +19,6 @@ import og.ogstartracker.domain.events.SlewControlEvent
 import og.ogstartracker.domain.models.CheckListItem
 import og.ogstartracker.domain.models.TrackingMode
 import og.ogstartracker.domain.usecases.arduino.GetCurrentStateUseCase
-import og.ogstartracker.domain.usecases.arduino.GetVersionUseCase
 import og.ogstartracker.domain.usecases.arduino.StartCaptureUseCase
 import og.ogstartracker.domain.usecases.providers.DashboardUseCaseProvider
 import og.ogstartracker.domain.usecases.settings.SetNewSettingsUseCase
@@ -87,55 +86,11 @@ class DashboardViewModel internal constructor(
 		.stateIn(viewModelScope, WhileUiSubscribed, Unit)
 
 	init {
-		// Fetch initial status to check if tracker is reachable
-		// Connection status will be updated periodically by WiFi timer
+		// fetch info if tracker is already in sidereal state
 		viewModelScope.launch(Dispatchers.Default) {
-			fetchTrackerStatus()
-		}
-	}
-
-	/**
-	 * Fetches tracker status and version, updating connection state.
-	 * If /status returns HTTP 200, we're connected even if JSON parsing fails.
-	 */
-	private suspend fun fetchTrackerStatus() {
-		Timber.d("DashboardViewModel: fetchTrackerStatus() called")
-		
-		// Try /version first as it's simpler (just returns "8")
-		try {
-			val verResult = useCases.getVersion()
-			if (verResult.isSuccess()) {
-				Timber.d("DashboardViewModel: /version SUCCESS -> ${verResult.data}")
-				og.ogstartracker.utils.VersionHolder.version = verResult.data
-				// Version endpoint responded, tracker is reachable
-				_uiState.update { it.copy(wifiConnected = true) }
-			} else if (verResult.isError()) {
-				Timber.w("DashboardViewModel: /version FAILED - ${verResult.errorIdentification}")
-				// Only mark as disconnected if we get a real network error (not just parse error)
-				// JsonDataException means the endpoint responded but format is unexpected
-				_uiState.update { it.copy(wifiConnected = false) }
-				return // Don't try /status if /version fails completely
+			useCases.getCurrentState(GetCurrentStateUseCase.Input(showInUI = false)).onSuccess { status ->
+				_uiState.update { it.copy(siderealActive = status == STATUS_TRACKING_ON) }
 			}
-		} catch (e: Exception) {
-			Timber.w(e, "DashboardViewModel: Exception while fetching /version")
-			_uiState.update { it.copy(wifiConnected = false) }
-			return
-		}
-
-		// Now try /status for tracking state
-		val statusResult = useCases.getCurrentState(GetCurrentStateUseCase.Input(showInUI = false))
-		if (statusResult.isSuccess()) {
-			Timber.d("DashboardViewModel: /status SUCCESS -> ${statusResult.data}")
-			_uiState.update {
-				it.copy(
-					siderealActive = statusResult.data?.trackingActive ?: false,
-					capturingActive = statusResult.data?.intervalometerActive ?: false,
-					wifiConnected = true
-				)
-			}
-		} else {
-			Timber.w("DashboardViewModel: /status parsing failed, but tracker may still be connected")
-			// Don't set wifiConnected=false here if /version succeeded
 		}
 	}
 
@@ -260,25 +215,16 @@ class DashboardViewModel internal constructor(
 				sendCommand {
 					useCases.startCapture(
 						StartCaptureUseCase.Input(
-							mode = 0, // 0=start capture
-							preset = 0,
-							captureMode = og.ogstartracker.domain.models.CaptureMode.LONG_EXPOSURE_STILL,
-							exposureTime = uiState.value.exposeTime.textState.text.toIntOrNull() ?: return@sendCommand,
-							exposures = uiState.value.frameCount.textState.text.toIntOrNull() ?: return@sendCommand,
-							preDelay = 5,
-							delay = 2,
-							frames = 1,
-							panAngle = 0,
-							panDirection = 1,
-							enableTracking = if (uiState.value.stopTrackingEnabled) 0 else 1,
-							ditherChoice = if (uiState.value.ditheringEnabled) 1 else 0,
-							ditherFrequency = 1,
+							exposure = uiState.value.exposeTime.textState.text.toIntOrNull() ?: return@sendCommand,
+							numExposures = uiState.value.frameCount.textState.text.toIntOrNull() ?: return@sendCommand,
 							focalLength = if (uiState.value.ditheringEnabled) {
 								uiState.value.ditherFocalLength.textState.text.toIntOrNull() ?: return@sendCommand
 							} else 0,
-							pixelSize = if (uiState.value.ditheringEnabled) {
+							pixSize = if (uiState.value.ditheringEnabled) {
 								(uiState.value.ditherPixelSize.textState.text.replace(",", ".").toDouble() * 100.0).roundToInt()
 							} else 0,
+							ditherEnabled = if (uiState.value.ditheringEnabled) 1 else 0,
+							disableTrackingOnEnd = if (uiState.value.stopTrackingEnabled) 1 else 0,
 						)
 					).onSuccess {
 						_uiState.update { it.copy(capturingActive = true, captureStartTime = System.currentTimeMillis()) }
@@ -388,21 +334,12 @@ class DashboardViewModel internal constructor(
 			while (runCycle) {
 				useCases.startCapture(
 					StartCaptureUseCase.Input(
-						mode = 0,
-						preset = 0,
-						captureMode = og.ogstartracker.domain.models.CaptureMode.LONG_EXPOSURE_STILL,
-						exposureTime = expositionTime,
-						exposures = 1,
-						preDelay = 5,
-						delay = 2,
-						frames = 1,
-						panAngle = 0,
-						panDirection = 1,
-						enableTracking = 1,
-						ditherChoice = 0,
-						ditherFrequency = 1,
+						exposure = expositionTime,
+						numExposures = 1,
 						focalLength = 0,
-						pixelSize = 0,
+						pixSize = 0,
+						ditherEnabled = 0,
+						disableTrackingOnEnd = 0,
 					)
 				).onError {
 					_uiState.update {
@@ -578,16 +515,12 @@ class DashboardViewModel internal constructor(
 
 	/**
 	 * Starts coroutine that wifi timer is running on.
-	 * Periodically checks WiFi connection and tracker API status.
 	 */
 	private fun startWiFiTimerJob() {
 		wifiTimerJob = viewModelScope.launch(Dispatchers.Default) {
 			while (runTimer) {
 				delay(CHECK_WIFI_DURATION)
 				_checkWifiEvent.value = true
-				
-				// Also periodically check if tracker API is reachable
-				fetchTrackerStatus()
 			}
 		}
 	}

@@ -12,13 +12,6 @@ android {
 	namespace = packageName
 	compileSdk = 34
 
-	// Tracker base URL - can be overridden with -PtrackerUrl or TRACKER_URL env var
-	// Ensure trailing slash for Retrofit baseUrl
-	val defaultTrackerUrl = "http://tracker.local/"
-	val defaultTrackerFallback = "http://192.168.4.1/"
-	val propertyTrackerUrl = (project.findProperty("trackerUrl") as String?) ?: System.getenv("TRACKER_URL")
-	val buildTrackerUrl = propertyTrackerUrl ?: defaultTrackerUrl
-
 	val buildVersionCode = Integer.parseInt(System.getenv("VERSION_CODE") ?: "7")
 	val buildVersionName = System.getenv("VERSION_NAME") ?: "1.0.6-beta01"
 
@@ -28,12 +21,6 @@ android {
 		targetSdk = 34
 		versionCode = buildVersionCode
 		versionName = buildVersionName
-
-		// Expose TRACKER_URL and a fallback URL to the app via BuildConfig for all build variants
-		buildConfigField("String", "TRACKER_URL", "\"$buildTrackerUrl\"")
-		val propertyTrackerFallback = (project.findProperty("trackerFallback") as String?) ?: System.getenv("TRACKER_URL_FALLBACK")
-		val buildTrackerFallback = propertyTrackerFallback ?: defaultTrackerFallback
-		buildConfigField("String", "TRACKER_URL_FALLBACK", "\"$buildTrackerFallback\"")
 
 		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -76,7 +63,9 @@ android {
 	}
 
 	productFlavors {
-		create("dev") { }
+		create("dev") {
+			buildConfigField("String", "TRACKER_URL", "\"http://www.tracker.com\"")
+		}
 	}
 	
 	applicationVariants.all {
@@ -122,8 +111,6 @@ dependencies {
 	implementation(libs.retrofit)
 	implementation(libs.retrofitScalars)
 	implementation(libs.retrofitConverter)
-	implementation(libs.moshi)
-	implementation(libs.moshiKotlin)
 	implementation(libs.okhttp)
 	implementation(libs.timber)
 	implementation(libs.okhttpInterceptor)

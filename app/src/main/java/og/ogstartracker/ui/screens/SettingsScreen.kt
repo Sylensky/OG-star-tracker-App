@@ -214,8 +214,7 @@ private fun SettingsScreenLayout(
 				},
 				summary = {
 					Text(
-						text = uiState.version?.let { "${it.version} (${it.buildDate})" } 
-							?: stringResource(id = R.string.settings_tracker_firmware_cannot_detect),
+						text = uiState.version?.toString() ?: stringResource(id = R.string.settings_tracker_firmware_cannot_detect),
 						style = textStyle14Bold,
 						color = AppTheme.colorScheme.primary
 					)

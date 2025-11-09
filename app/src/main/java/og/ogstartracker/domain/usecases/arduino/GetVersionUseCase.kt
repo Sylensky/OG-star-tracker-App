@@ -1,12 +1,14 @@
 package og.ogstartracker.domain.usecases.arduino
 
 import og.ogstartracker.domain.usecases.base.ResourceSuspendProviderUseCase
-import og.ogstartracker.network.models.VersionResponse
 import og.ogstartracker.repository.ArduinoRepository
+import og.ogstartracker.utils.map
 
 class GetVersionUseCase constructor(
 	private val repository: ArduinoRepository
-) : ResourceSuspendProviderUseCase<VersionResponse> {
+) : ResourceSuspendProviderUseCase<Int?> {
 
-	override suspend fun invoke() = repository.getVersion()
+	override suspend fun invoke() = repository.getVersion().map {
+		it?.toIntOrNull()
+	}
 }

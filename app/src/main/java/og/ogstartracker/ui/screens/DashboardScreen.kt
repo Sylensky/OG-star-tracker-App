@@ -89,7 +89,6 @@ import og.ogstartracker.ui.theme.textStyle20Bold
 import og.ogstartracker.utils.HardwareStatusService
 import og.ogstartracker.utils.SystemUiHelper
 import org.koin.androidx.compose.koinViewModel
-import timber.log.Timber
 
 private const val RESET_TRACKING_DELAY = 300L
 
@@ -128,15 +127,6 @@ fun DashboardScreen(
 		onStop = viewModel::stopWiFiTimer
 	)
 
-	// Start foreground service when connected to tracker API
-	LaunchedEffect(uiState.wifiConnected) {
-		if (uiState.wifiConnected) {
-			val serviceIntent = Intent(context, HardwareStatusService::class.java)
-			Timber.d("DashboardScreen: wifiConnected=true, starting HardwareStatusService")
-			context.startForegroundService(serviceIntent)
-		}
-	}
-
 	var showInfoDialog by remember { mutableStateOf(false) }
 
 	val scope = rememberCoroutineScope()
@@ -172,26 +162,20 @@ fun DashboardScreen(
 			) return@DashboardScreenContent
 
 			when {
-				// user did not grant location permission yet, request it
-				!fineLocationPermissionState.allPermissionsGranted -> {
-					// Check if permanently denied (can't show rationale anymore)
-					val permanentlyDenied = fineLocationPermissionState.permissions.any { 
-						it.status is PermissionStatus.Denied && !it.status.shouldShowRationale 
-					}
-					
-					if (permanentlyDenied) {
-						// Navigate to app settings to manually enable permission
-						context.startActivity(Intent(ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-							setData(Uri.fromParts("package", context.packageName, null))
-						})
-					} else {
-						// Show permission request dialog
-						fineLocationPermissionState.launchMultiplePermissionRequest()
-					}
+				// user permanently banned location, navigate to app settings
+				fineLocationPermissionState.permissions.any { it.status == PermissionStatus.Denied(shouldShowRationale = true) } ->
+					context.startActivity(Intent(ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+						setData(Uri.fromParts("package", context.packageName, null))
+					})
+
+				// user did not enabled location, request
+				!fineLocationPermissionState.allPermissionsGranted
+					&& !fineLocationPermissionState.permissions.all { it.status.shouldShowRationale } -> {
+					fineLocationPermissionState.launchMultiplePermissionRequest()
 				}
 
-				// user enabled location, but is on wrong wifi, open WiFi settings
-				else -> {
+				// user enabled location, but is on wrong wifi, open settings
+				fineLocationPermissionState.allPermissionsGranted -> {
 					context.startActivity(Intent(ACTION_WIFI_SETTINGS))
 				}
 			}
@@ -235,25 +219,21 @@ private fun checkWifiConnection(
 	context: Context,
 	viewModel: DashboardViewModel
 ): Boolean {
-	val connectivityManager = context.getSystemService<ConnectivityManager>() ?: return false
+	val connectivityManager = context.getSystemService<ConnectivityManager>() ?: return true
 	val networkCapabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
 
-	// Check if WiFi is active (not cellular or other transport)
-	val isOnWifi = networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
-	
-	if (!isOnWifi) {
-		Timber.d("DashboardScreen: Not connected to WiFi")
-		viewModel.setConnection(false)
-		return false
-	}
+	networkCapabilities?.takeIf { it.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) }?.let innerLet@{
+		val wifiManager = context.getSystemService<WifiManager>() ?: return false
 
-	// WiFi is active - check if it's the tracker's hotspot
-	val isTrackerWifi = og.ogstartracker.utils.WiFiHelper.isConnectedToTracker(context)
-	Timber.d("DashboardScreen: On WiFi, isTrackerSSID=$isTrackerWifi")
-	
-	// Don't set connection=true here; let ViewModel's API check determine true connectivity
-	// This just helps with UI feedback about WiFi status
-	return isTrackerWifi
+		val correctWifi = wifiManager.connectionInfo.ssid == Config.WIFI_SSID
+		viewModel.setConnection(correctWifi)
+
+		if (correctWifi) {
+			val serviceIntent = Intent(context, HardwareStatusService::class.java)
+			context.startForegroundService(serviceIntent)
+		}
+	}
+	return false
 }
 
 @Composable
@@ -390,7 +370,7 @@ private fun DashboardScreenLayout(
 				ChecklistCard(
 					opened = uiState.openedCheckbox,
 					onClick = onChecklistClicked,
-					enabled = uiState.wifiConnected && uiState.haveNotificationPermission,
+					enabled = uiState.wifiConnected,
 					checkListItems = uiState.checkListItems,
 					onCardClick = onChecklistItemClicked,
 				)
@@ -402,7 +382,7 @@ private fun DashboardScreenLayout(
 					onCheckChanged = {
 						onSiderealClicked(!uiState.siderealActive)
 					},
-					enabled = uiState.wifiConnected && uiState.haveNotificationPermission,
+					enabled = uiState.wifiConnected,
 					trackingMode = trackingModeValue,
 					hemisphere = hemisphere,
 				)
@@ -412,7 +392,7 @@ private fun DashboardScreenLayout(
 				SlewControlCard(
 					slewControlCommands = onSlewControlEvent,
 					selectedSpeed = uiState.slewSpeed,
-					enabled = uiState.wifiConnected && uiState.haveNotificationPermission,
+					enabled = uiState.wifiConnected,
 				)
 			}
 

@@ -7,6 +7,6 @@ enum class Hemisphere constructor(
 	val arduinoValue: Int,
 	@StringRes val text: Int
 ) {
-	NORTH(0, R.string.settings_north),
-	SOUTH(1, R.string.settings_south)
+	NORTH(1, R.string.settings_north),
+	SOUTH(0, R.string.settings_south)
 }
