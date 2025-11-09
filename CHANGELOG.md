@@ -1,5 +1,31 @@
 # Changelog
 
+## [Unreleased]
+
+## [1.0.6-beta01]
+
+### Added
+- implement all new REST API endpoints from firmware feature/api-handler branch
+- add tracking rate management endpoints (getTrackingRates, saveTrackingRatePreset, loadTrackingRatePreset)
+- add goto control endpoints (gotoRA, abortGotoRA, setPosition, getCurrentPosition)
+- add catalog search endpoint (starSearch)
+- add new intervalometer endpoint (setCurrent) with full parameter set including pan angle, dither settings, and preset management
+- add setLanguage endpoint for web interface language control
+- add structured JSON responses for status and version endpoints with detailed information
+- add exposure progress display in notification (e.g., "Capturing (5/10)")
+
+### Changed
+- update WiFi SSID pattern to support unique identifiers (e.g., "OG Star Tracker#12ab")
+- update tracker base URL to use mDNS hostname (tracker.local instead of www.tracker.com)
+- update status endpoint to return structured JSON with slewActive, trackingActive, intervalometerActive, goToTarget, exposuresTaken, and currentExposure
+- update version endpoint to return JSON with version and buildDate
+- improve API parameter naming consistency (trackingSpeed instead of tspeed)
+- update HardwareStatusService to use new SSID prefix pattern matching
+- deprecate turnLeft/turnRight endpoints in favor of unified startSlew with direction parameter
+
+### Fixed
+- fix SSID checking in notification service to properly handle dynamic tracker identifiers
+
 ## [1.0.5-beta03]
 
 - slewing now support picking from multiple speed multipliers
