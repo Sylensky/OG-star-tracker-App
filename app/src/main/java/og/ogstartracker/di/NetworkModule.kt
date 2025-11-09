@@ -15,6 +15,7 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import retrofit2.Retrofit
+import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.converter.scalars.ScalarsConverterFactory
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
@@ -27,6 +28,7 @@ val networkModule = module {
 	fun provideRetrofit(
 		url: String,
 		interceptors: List<Interceptor>,
+		moshi: Moshi,
 	): Retrofit {
 		val builder = OkHttpClient.Builder()
 		interceptors.forEach {
@@ -41,6 +43,7 @@ val networkModule = module {
 			.baseUrl(url)
 			.client(client)
 			.addConverterFactory(ScalarsConverterFactory.create())
+			.addConverterFactory(MoshiConverterFactory.create(moshi))
 			.build()
 	}
 
@@ -50,6 +53,7 @@ val networkModule = module {
 			interceptors = listOf(
 				get(named(HTTP_LOGGING_INTERCEPTOR))
 			),
+			moshi = get(),
 		).create(ArduinoApi::class.java)
 	}
 
