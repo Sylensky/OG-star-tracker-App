@@ -64,7 +64,9 @@ android {
 
 	productFlavors {
 		create("dev") {
-			buildConfigField("String", "TRACKER_URL", "\"http://tracker.local\"")
+			// Using static IP instead of mDNS (tracker.local) because Android doesn't natively support mDNS resolution
+			// ESP32 in AP mode typically uses 192.168.4.1 as the default gateway IP
+			buildConfigField("String", "TRACKER_URL", "\"http://192.168.4.1\"")
 		}
 	}
 	

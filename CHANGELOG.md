@@ -16,7 +16,7 @@
 
 ### Changed
 - update WiFi SSID pattern to support unique identifiers (e.g., "OG Star Tracker#12ab")
-- update tracker base URL to use mDNS hostname (tracker.local instead of www.tracker.com)
+- update tracker base URL to use static IP address (192.168.4.1) for Android compatibility (mDNS not natively supported)
 - update status endpoint to return structured JSON with slewActive, trackingActive, intervalometerActive, goToTarget, exposuresTaken, and currentExposure
 - update version endpoint to return JSON with version and buildDate
 - improve API parameter naming consistency (trackingSpeed instead of tspeed)
