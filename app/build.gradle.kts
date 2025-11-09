@@ -64,7 +64,7 @@ android {
 
 	productFlavors {
 		create("dev") {
-			buildConfigField("String", "TRACKER_URL", "\"http://www.tracker.com\"")
+			buildConfigField("String", "TRACKER_URL", "\"http://tracker.local\"")
 		}
 	}
 	
