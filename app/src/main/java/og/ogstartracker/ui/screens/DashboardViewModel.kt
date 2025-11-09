@@ -88,8 +88,8 @@ class DashboardViewModel internal constructor(
 	init {
 		// fetch info if tracker is already in sidereal state
 		viewModelScope.launch(Dispatchers.Default) {
-			useCases.getCurrentState(GetCurrentStateUseCase.Input(showInUI = false)).onSuccess { status ->
-				_uiState.update { it.copy(siderealActive = status == STATUS_TRACKING_ON) }
+			useCases.getCurrentState(GetCurrentStateUseCase.Input(showInUI = false)).onSuccess { statusResponse ->
+				_uiState.update { it.copy(siderealActive = statusResponse?.trackingActive == true) }
 			}
 		}
 	}

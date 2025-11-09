@@ -1,25 +1,25 @@
 package og.ogstartracker.network
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
 
 /**
  * Response from /status endpoint
  */
 data class StatusResponse(
-	@SerializedName("slewActive") val slewActive: Boolean,
-	@SerializedName("trackingActive") val trackingActive: Boolean,
-	@SerializedName("intervalometerActive") val intervalometerActive: Boolean,
-	@SerializedName("goToTarget") val goToTarget: Boolean,
-	@SerializedName("exposuresTaken") val exposuresTaken: Int,
-	@SerializedName("currentExposure") val currentExposure: Int,
+	@Json(name = "slewActive") val slewActive: Boolean,
+	@Json(name = "trackingActive") val trackingActive: Boolean,
+	@Json(name = "intervalometerActive") val intervalometerActive: Boolean,
+	@Json(name = "goToTarget") val goToTarget: Boolean,
+	@Json(name = "exposuresTaken") val exposuresTaken: Int,
+	@Json(name = "currentExposure") val currentExposure: Int,
 )
 
 /**
  * Response from /version endpoint
  */
 data class VersionResponse(
-	@SerializedName("version") val version: String,
-	@SerializedName("buildDate") val buildDate: String,
+	@Json(name = "version") val version: String,
+	@Json(name = "buildDate") val buildDate: String,
 )
 
 /**
@@ -27,30 +27,30 @@ data class VersionResponse(
  * Types: 0=SIDEREAL, 1=LUNAR, 2=SOLAR, 3=KING, 4=CUSTOM
  */
 data class TrackingRatesResponse(
-	@SerializedName("type") val type: Int,
-	@SerializedName("customRate") val customRate: Int,
+	@Json(name = "type") val type: Int,
+	@Json(name = "customRate") val customRate: Int,
 )
 
 /**
  * Response from /getCurrentPosition endpoint
  */
 data class PositionResponse(
-	@SerializedName("position") val position: Long,
+	@Json(name = "position") val position: Long,
 )
 
 /**
  * Response from /starSearch endpoint
  */
 data class CatalogSearchResponse(
-	@SerializedName("results") val results: List<CatalogResult>,
+	@Json(name = "results") val results: List<CatalogResult>,
 )
 
 /**
  * Individual catalog search result
  */
 data class CatalogResult(
-	@SerializedName("name") val name: String,
-	@SerializedName("ra") val ra: String,
-	@SerializedName("dec") val dec: String,
-	@SerializedName("magnitude") val magnitude: Float? = null,
+	@Json(name = "name") val name: String,
+	@Json(name = "ra") val ra: String,
+	@Json(name = "dec") val dec: String,
+	@Json(name = "magnitude") val magnitude: Float? = null,
 )
